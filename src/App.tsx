@@ -1,8 +1,5 @@
 import React, { useMemo } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Login from './components/Login';
-import UserRecords from './components/UserRecords';
-import NewOperation from './components/NewOperation';
 import { HomePage } from './pages/Home';
 import { State, usePersistentState } from './utils/state';
 import { User, buildUser } from './models/User';
@@ -50,9 +47,9 @@ const AppRouter = () =>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/home" element={<HomePage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/new-operation" element={<NewOperation />} />
-        <Route path="/user-records" element={<UserRecords />} />
+        <Route path="/login" element={<></>} />
+        <Route path="/new-operation" element={<></>} />
+        <Route path="/user-records" element={<></>} />
       </Routes>
     </MainLayout>
   </Router>

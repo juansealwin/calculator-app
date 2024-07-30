@@ -1,12 +1,18 @@
 import React from "react"
 import { Navbar } from "./Navbar"
 import { Box } from "@mui/material"
+import { State } from "../utils/state"
+import { LoginWindow, LoginWindowStates } from "./LoginWindow"
+import { useUser } from "../hooks/context"
 
 export const MainLayout = (
   props: {
     children?: React.ReactNode
+    loginScreen: State<LoginWindowStates>
   }
 ) => {
+
+  const user = useUser()
 
   return (
     <Box 
@@ -18,9 +24,12 @@ export const MainLayout = (
         minHeight: '100vh', 
       }}
     >
-      <Navbar />
+      <Navbar loginScreen={props.loginScreen}/>
       <Box sx={{ width: "100%", height: "100%" }}>
         {props.children}
+        {
+          user.type === "visitor" && <LoginWindow screen={props.loginScreen}/>
+        }
       </Box>
     </Box>
   )

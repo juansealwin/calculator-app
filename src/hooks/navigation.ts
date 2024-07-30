@@ -5,9 +5,8 @@ import { useNavigate } from "react-router-dom"
 /* Add the necessary ptahs */
 export const paths = {
   root: "/",
-  home: "/home",
-  newOperation: "/newOperation",
-  operationHistory: "/operationHistory",
+  newOperation: "/new-operation",
+  operationHistory: "/records-history",
 }
 
 export const useNavigation = () => {
@@ -24,7 +23,6 @@ export const useNavigation = () => {
     return {
       goTo: {
         root: push(paths.root),
-        home: push(paths.home),
         newOperation: push(paths.newOperation),
         operationHistory: push(paths.operationHistory),
       },

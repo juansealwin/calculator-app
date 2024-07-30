@@ -1,14 +1,16 @@
 import React, { useMemo } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { HomePage } from './pages/Home';
-import { State, usePersistentState } from './utils/state';
-import { User, buildUser } from './models/User';
+import { State, usePersistentState, useStatefull } from './utils/state';
+import { User, buildUser } from './user/User';
 import { UserContext } from './hooks/context';
 import { MainLayout } from './components/MainLayout';
 import { Credentials, CredentialsT } from './utils/serialization';
 import { useQueryClient } from "react-query"
 import { stringCodecOf } from './utils/codec';
 import { OptionalOf } from './utils/model';
+import { LoginWindowStates } from './components/LoginWindow';
+import { HistoryRecordPage } from './pages/HistoryRecordsPage';
 
 const useUserCredentials = (credentials: State<Credentials | undefined>): User => {
 
@@ -16,7 +18,7 @@ const useUserCredentials = (credentials: State<Credentials | undefined>): User =
 
   const user = useMemo(
     () => buildUser(credentials, queryClient), 
-    [credentials.value?.token]
+    [credentials.value?.accessToken]
   )
 
   return user
@@ -41,17 +43,19 @@ const CalculatorApp = () => {
 }
 
 
-const AppRouter = () => 
-  <Router>
-    <MainLayout>
+const AppRouter = () => {
+  
+  const loginscreen = useStatefull<LoginWindowStates>(() => "hidden")
+
+  return <Router>
+    <MainLayout loginScreen={loginscreen}>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/login" element={<></>} />
-        <Route path="/new-operation" element={<></>} />
-        <Route path="/user-records" element={<></>} />
+        <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
+        <Route path="/new-operation" element={<HomePage loginScreen={loginscreen}/>} />
+        <Route path="/records-history" element={<HistoryRecordPage/>} />
       </Routes>
     </MainLayout>
   </Router>
+}
 
 export default CalculatorApp

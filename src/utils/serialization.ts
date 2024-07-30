@@ -1,7 +1,7 @@
 import { Codec } from "./codec"
 import { throwError } from "./error"
 import { id } from "./functional"
-import { Json, ListOf, Model, Obtain, ProductOf } from "./model"
+import { Json, ListOf, Model, Obtain, OptionalOf, ProductOf, StringEnumOf } from "./model"
 
 export const VoidT: Model<void> = {
   codec: {
@@ -49,20 +49,65 @@ export const jsonToStringCodec: Codec<Json, string> = {
 
 export const UserDataT = ProductOf({
   id: StringT,
-  email: StringT,
+  username: StringT,
   status: BooleanT
 })
 
 export const CredentialsT = ProductOf({
-  token: StringT,
+  accessToken: StringT,
+  tokenType: StringT,
   userData: UserDataT,
 })
 
-export const UsersDataT = ListOf(UserDataT)
+export const OperationTypeT = StringEnumOf([
+  "addition", 
+  "subtraction", 
+  "multiplication", 
+  "division", 
+  "square_root",
+  "random_string" 
+])
+
+export const OperationCreateT = ProductOf({
+  type: OperationTypeT,
+  amount1: OptionalOf(NumberT),
+  amount2: OptionalOf(NumberT)
+})
+
+export const OperationResultT = ProductOf({
+  result: StringT,
+  cost: NumberT
+})
+
+export const BalanceT = ProductOf({
+  id: NumberT,
+  user_id: NumberT,
+  amount: NumberT
+})
+
+export const RecordT = ProductOf({
+  id: NumberT,
+  amount: NumberT,
+  user_balance: NumberT,
+  operation_response: StringT,
+  date: StringT
+})
+
+
+export const RecordsT = ListOf(RecordT)
 
 export type UserData = Obtain<typeof UserDataT>
 
-export type UsersData = Obtain<typeof UsersDataT>
-
 export type Credentials = Obtain<typeof CredentialsT>
 
+export type OperationType = Obtain<typeof OperationTypeT>
+
+export type OperationCreate = Obtain<typeof OperationCreateT>
+
+export type OperationResult = Obtain<typeof OperationResultT>
+
+export type Balance = Obtain<typeof BalanceT>
+
+export type Record = Obtain<typeof RecordT>
+
+export type Records = Obtain<typeof RecordsT>

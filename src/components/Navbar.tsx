@@ -1,14 +1,20 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { Text } from "../primitives/Text"
-import { Avatar, Button } from "@mui/material"
+import { Box, Button } from "@mui/material"
 import { Col, Row } from "../primitives/Stack"
 import { useNavigation } from "../hooks/navigation"
-import { useUser } from "../hooks/context"
+import { useLoggedUser, useUser } from "../hooks/context"
 import LogoutIcon from "@mui/icons-material/Logout"
+import { LoginWindowStates } from "./LoginWindow"
+import { setTo, State } from "../utils/state"
+import { useAsynchronous } from "../utils/asynchronism"
 
-export const Navbar = () => {
+export const Navbar = (
+  props: {
+    loginScreen: State<LoginWindowStates>
+  }
+) => {
 
-  const nav = useNavigation()
   const user = useUser()
 
   return(
@@ -24,7 +30,6 @@ export const Navbar = () => {
     >
       <Row
         sx={{
-          width: "18%", 
           cursor: "pointer", 
           alignContent: "center", 
           alignItems: "center" 
@@ -35,52 +40,90 @@ export const Navbar = () => {
           color={"white"}
           text={"Calculator App"}
           fontSize={40}
+          left={"5%"}
         />
       </Row>
-      <Row
-        sx={{flexGrow: 1}}
+      <Row/>
         
-        justifyContent={"space-around"}
+          {
+            user.type === "visitor" ?
+              <Row 
+                justifyContent={"space-around"} 
+                alignItems={"center"}
+                spacing={10}
+              >
+                <Button 
+                  children={<Text text="Login" fontSize={16}/>}
+                  sx={{color:"white"}}
+                  onClick={setTo(props.loginScreen, "login")}
+                />
+                <Button 
+                  children={<Text text="Sign up" fontSize={16}/>}
+                  sx={{color:"white"}}
+                  onClick={setTo(props.loginScreen, "register")}
+                />
+              </Row> :
+              <LoggedNavbar/>
+          } 
+    </Row>
+  )
+}
+
+
+const LoggedNavbar = () => {
+
+  const user = useLoggedUser()
+  const nav = useNavigation()
+  const getBalanceAsync = useAsynchronous(user.actions.getBalance)
+
+  useEffect(getBalanceAsync.run({}), [user.credentials.userData.id, user.credentials.accessToken])
+  console.log(getBalanceAsync.result)
+  return(
+    <Row 
+      justifyContent={"space-around"} 
+      alignItems={"center"}
+      spacing={10}
+      height={"100%"}
+    >
+      <Button 
+        children={<Text text="New operation" fontSize={16}/>}
+        sx={{color:"white"}}
+        onClick={nav.goTo.newOperation}
+      />
+      <Button 
+        children={<Text text="History Records" fontSize={16}/>}
+        sx={{color:"white"}}
+        onClick={nav.goTo.operationHistory}
       />
 
-       
-      
-        <Col
-          sx={{
-            borderLeft: "1px solid white",
-            padding: 8
-          }}
-          spacing={1}
-        >
+      <Box sx={{width: "1px", height: "100%", border: "1px solid white", background: "white"}}/>
+
+      <Row spacing={2} alignItems={"center"}>
+        <Col spacing={0.5} alignItems={"center"}>
+          <Text 
+            text={`Hi ${user.credentials.userData.username}`}  
+            fontSize={18}
+            color={"white"}
+          />
+          
           {
-            user.type !== "visitor" ?
+            getBalanceAsync.result !== undefined &&
             <>
-              <Button 
-                children={<Text text="Iniciar sesión" fontSize={16}/>}
-                sx={{color:"white"}}
+              <Text 
+                text={`Balance: ${getBalanceAsync.result} $`}  
+                fontSize={18}
+                color={"white"}
+                sx={{ background: "#259d85", padding: 1, borderRadius: "5px" }}
               />
-            </> :
-            <Row 
-              justifyContent={"space-around"} 
-              alignItems={"center"}
-              spacing={10}
-            >
-              <Button 
-                children={<Text text="New operation" fontSize={16}/>}
-                sx={{color:"white"}}
-              />
-              <Button 
-                children={<Text text="History Records" fontSize={16}/>}
-                sx={{color:"white"}}
-              />
-              <LogoutIcon 
-                sx={{color:"white", fontSize: 36}}
-              />
-            </Row> 
-          } 
+            </>
+          }
         </Col>
-      
-       
-    </Row>
+      </Row>
+
+      <LogoutIcon 
+        sx={{color:"white", fontSize: 36, cursor: "pointer"}}
+        onClick={user.actions.logout}
+      />
+    </Row> 
   )
 }

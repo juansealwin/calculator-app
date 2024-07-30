@@ -1,8 +1,13 @@
-import React from "react"
-import { Stack, Button, Typography, SxProps } from "@mui/material"
+import React, { useEffect } from "react"
+import { Stack, Button, SxProps } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/KeyboardArrowLeft"
 import { Text } from "../primitives/Text"
-import { useStatefull, setTo } from "../utils/state"
+import { useStatefull, setTo, State } from "../utils/state"
+import { LoginWindowStates } from "../components/LoginWindow"
+import { useLoggedUser, useUser } from "../hooks/context"
+import { OperationType } from "../utils/serialization"
+import { nop, sequenceIO } from "../utils/functional"
+import { useAsynchronous } from "../utils/asynchronism"
 
 const operationButtonSx: SxProps = {
     width: "30%",
@@ -40,30 +45,47 @@ const numberButtonSx: SxProps = {
     }
 }
 
-const evaluateExpression = (expr: string) => {
-    try {
-        const sanitizedExpr = expr
-            .replace(/[^0-9+\-*/().x]/g, '') 
-            .replace(/x/g, '*') 
-            .replace(/(\d+)([*/])(\d+)/g, '$1$2$3') 
+export const operationsReg = /(\+|\-|\*|\/|√|rand)/
 
-        const result = new Function('return ' + sanitizedExpr)()
-        if (result === undefined || isNaN(result)) {
-            return 'Syntax Error'
-        }
-        return result.toString()
-    } catch (error) {
-        return 'Syntax Error'
+const checkExpression = (expr: string, operationType: OperationType | undefined): boolean => {
+    if (operationType === undefined)
+        return false
+
+    const parts: string[] = expr.split(operationsReg).filter(part => part.length > 0)
+
+    const isNumber = (str: string) => !isNaN(Number(str))
+
+    switch (operationType) {
+        case "addition":
+        case "subtraction":
+        case "multiplication":
+            return parts.length === 3 && isNumber(parts[0]) && isNumber(parts[2]) && parts[0].length > 0 && parts[2].length > 0
+        case "division":
+            return parts.length === 3 && isNumber(parts[0]) && isNumber(parts[2]) && parts[0].length > 0 && parts[2].length > 0 && Number(parts[2]) !== 0
+        case "square_root":
+            return parts.length === 2 && parts[0] === "sqrt" && isNumber(parts[1]) && Number(parts[1]) > 0
+        case "random_string":
+            return parts.length === 1 && parts[0] === "random"
+        default:
+            return false
     }
 }
 
-export const HomePage = () => {
+export const HomePage = (
+    props: {
+        loginScreen: State<LoginWindowStates>
+    }
+) => {
+    const user = useUser()
     const calcWidth = 400
     const calcHeight = calcWidth * 1.5
     const display = useStatefull(() => "")
 
+    const operationType = useStatefull<OperationType | undefined>(() => undefined)
+
     const handleButtonClick = (value: string) => setTo(display, `${display.value}${value}`)
 
+    const showResult = useStatefull(() => false) 
 
     return (
         <Stack width={"100%"} alignItems="center" justifyContent="center" height="100vh">
@@ -110,15 +132,34 @@ export const HomePage = () => {
                                 color: "#FFFFFF",
                                 borderRadius: "10px 10px 0 0",
                                 display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                alignItems: "flex-start",
+                                justifyContent: "left",
                                 marginBottom: "10px",
                                 fontSize: "1.5rem",
                                 padding: "10px",
                                 boxShadow: "inset 0 0 5px rgba(0, 0, 0, 0.5)",
+                                position: "relative"
                             }}
                         >
-                            <Text children={display.value} color={"white"} fontSize={48} />
+                            <Text 
+                                children={display.value} 
+                                color={"white"} 
+                                fontSize={40} 
+                            />
+                            {
+                                showResult.value && <>
+                                    <Text 
+                                        children={`Res = ${display.value}`} 
+                                        color={"white"} 
+                                        fontSize={24} 
+                                    />
+                                    <Text  
+                                        children={`Cost = ${display.value}`} 
+                                        color={"white"} 
+                                        fontSize={24} 
+                                    />
+                                </>
+                            }
                         </Stack>
 
                         {/* Buttons */}
@@ -138,9 +179,8 @@ export const HomePage = () => {
                                         variant="contained"
                                         sx={numberButtonSx}
                                         onClick={handleButtonClick(num.toString())}
-                                    >
-                                        {num}
-                                    </Button>
+                                        children={num}
+                                    />
                                 ))}
                             </Stack>
                             <Stack
@@ -154,9 +194,8 @@ export const HomePage = () => {
                                         variant="contained"
                                         sx={numberButtonSx}
                                         onClick={handleButtonClick(num.toString())}
-                                    >
-                                        {num}
-                                    </Button>
+                                        children={num}
+                                    />
                                 ))}
                             </Stack>
                             <Stack
@@ -170,9 +209,8 @@ export const HomePage = () => {
                                         variant="contained"
                                         sx={numberButtonSx}
                                         onClick={handleButtonClick(num.toString())}
-                                    >
-                                        {num}
-                                    </Button>
+                                        children={num}
+                                    />
                                 ))}
                             </Stack>
                             <Stack
@@ -184,16 +222,14 @@ export const HomePage = () => {
                                     variant="contained"
                                     sx={numberButtonSx}
                                     onClick={handleButtonClick("0")}
-                                >
-                                    0
-                                </Button>
+                                    children={"0"}
+                                />
                                 <Button
                                     variant="contained"
                                     sx={numberButtonSx}
                                     onClick={handleButtonClick(".")}
-                                >
-                                    .
-                                </Button>
+                                    children={"."}
+                                />
                                 <Button
                                     variant="contained"
                                     sx={eraseButtonSx}
@@ -210,24 +246,22 @@ export const HomePage = () => {
                                 <Button
                                     variant="contained"
                                     sx={operationButtonSx}
-                                    onClick={handleButtonClick("+")}
-                                >
-                                    +
-                                </Button>
+                                    onClick={sequenceIO([handleButtonClick("+"), setTo(operationType, "addition")])}
+                                    children={"+"}
+                                />
                                 <Button
                                     variant="contained"
                                     sx={operationButtonSx}
-                                    onClick={handleButtonClick("-")}
-                                >
-                                    -
-                                </Button>
+                                    onClick={sequenceIO([handleButtonClick("-"), setTo(operationType, "subtraction")])}
+                                    children={"-"}
+                                />
                                 <Button
                                     variant="contained"
                                     sx={operationButtonSx}
-                                    onClick={handleButtonClick("x")}
-                                >
-                                    x
-                                </Button>
+                                    onClick={sequenceIO([handleButtonClick("x"), setTo(operationType, "multiplication")])}
+                                    children={"x"}
+                                />
+                            
                             </Stack>
                             <Stack
                                 direction="row"
@@ -237,35 +271,44 @@ export const HomePage = () => {
                                 <Button
                                     variant="contained"
                                     sx={operationButtonSx}
-                                    onClick={handleButtonClick("/")}
-                                >
-                                    /
-                                </Button>
+                                    onClick={sequenceIO([handleButtonClick("/"), setTo(operationType, "division")])}
+                                    children={"/"}
+                                />
+
                                 <Button
                                     variant="contained"
                                     sx={operationButtonSx}
-                                    onClick={setTo(display, Math.random().toString(36).substring(2, 15))}
-                                >
-                                    Rand
-                                </Button>
+                                    onClick={sequenceIO([handleButtonClick("√"), setTo(operationType, "square_root")])}
+                                    children={"√"}
+                                />
+                                
+
                                 <Button
                                     variant="contained"
-                                    sx={eraseButtonSx}
-                                    onClick={ setTo(display, "")}
-                                    children={"CE"}
+                                    sx={operationButtonSx}
+                                    onClick={sequenceIO([handleButtonClick("rand"), setTo(operationType, "random_string")])}
+                                    children={"Rand"}
                                 />
+                                
                             </Stack>
                             <Stack
                                 direction="row"
                                 spacing={1}
                                 sx={{ flexWrap: "wrap" }}
+                                width={"100%"}
+                                justifyContent={"space-between"}
                             >
                                 <Button
                                     variant="contained"
-                                    sx={{...operationButtonSx, width: "100%"}}
-                                    onClick={setTo(display, evaluateExpression(display.value))}
-                                    children={"="}
+                                    sx={{...eraseButtonSx, flexGrow: 1}}
+                                    onClick={sequenceIO([setTo(display, ""), setTo(showResult, false), setTo(operationType, undefined)])}
+                                    children={"CE"}
                                 />
+                                {
+                                    user.type === "visitor" ? 
+                                        <EqualsVistor loginScreen={props.loginScreen}/> :
+                                        <EqualsLogged display={display} operationType={operationType} showResult={showResult}/>
+                                }
                             </Stack>
                             
                         </Stack>
@@ -273,5 +316,47 @@ export const HomePage = () => {
                 </Stack>
             </Stack>
         </Stack>
+    )
+}
+
+const EqualsVistor = (
+    props: {
+        loginScreen: State<LoginWindowStates>
+    }
+) => <Button
+    variant="contained"
+    sx={{...operationButtonSx, flexGrow: 1}}
+    onClick={setTo(props.loginScreen, "login")}
+    children={"="}
+/>
+
+const EqualsLogged = (
+    props: {
+        display: State<string>
+        operationType: State<OperationType | undefined>
+        showResult: State<boolean>
+    }
+) => {
+    const display = props.display
+    const operationType = props.operationType.value
+    const loggedUser = useLoggedUser()
+    const makeOperationAsync = useAsynchronous(loggedUser.actions.makeOperation)
+    const runOperation = operationType !== undefined ? makeOperationAsync.run({expr: display.value, type: operationType}) : nop
+
+    useEffect(makeOperationAsync.status === "completed" ? setTo(props.showResult, true) : nop)
+    // console.log(loggedUser)
+    // console.log(operationType)
+    // console.log(checkExpression(display.value, operationType ?? "addition"))
+    return(
+        <Button
+            variant="contained"
+            sx={{...operationButtonSx, flexGrow: 1}}
+            onClick={
+                checkExpression(display.value, operationType) ?
+                    runOperation :
+                    setTo(display, "Syntax Error") 
+            }
+            children={"="}
+        />
     )
 }

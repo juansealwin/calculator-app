@@ -1,5 +1,6 @@
 import { Codec, enumCodec, listCodec, optionalCodec, withDefaultCodec } from "./codec"
 import { List } from "./list"
+import { StringT } from "./serialization"
 
 export type Json = unknown
 
@@ -107,3 +108,7 @@ export const ListOf = <T>(
     codec: listCodec(model.codec),
     check: (value): value is List<T> => Array.isArray(value) && all(value, model.check)
   })
+
+export const StringEnumOf = <E extends string>(
+  values: List<E>
+): EnumModel<E> => EnumOf(StringT, values)

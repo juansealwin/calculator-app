@@ -1,6 +1,8 @@
 import React from "react"
-import { LoggedUser, User, VisitorUser } from "../models/User"
+import { User } from "../user/User"
 import { throwError } from "../utils/error"
+import { VisitorUser } from "../user/VisitorUser"
+import { LoggedUser } from "../user/LoggedUser"
 
 
 export const UserContext = React.createContext<User | undefined>(undefined)

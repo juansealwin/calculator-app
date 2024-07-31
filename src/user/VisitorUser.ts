@@ -36,7 +36,7 @@ export const buildVisitorUser = (
           bodyLogin,
           CredentialsT
         )()
-        console.log(fetchCredentials)
+        
         const credentials: Credentials = {
           accessToken: fetchCredentials.accessToken,
           tokenType: fetchCredentials.tokenType,

@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/Home';
 import { State, usePersistentState, useStatefull } from './utils/state';
 import { User, buildUser } from './user/User';
-import { UserContext } from './hooks/context';
+import { UserContext, useUser } from './hooks/context';
 import { MainLayout } from './components/MainLayout';
 import { Credentials, CredentialsT } from './utils/serialization';
 import { useQueryClient } from "react-query"
@@ -11,6 +11,7 @@ import { stringCodecOf } from './utils/codec';
 import { OptionalOf } from './utils/model';
 import { LoginWindowStates } from './components/LoginWindow';
 import { HistoryRecordPage } from './pages/HistoryRecordsPage';
+import { SetBalancePage } from './pages/SetBalancePage';
 
 const useUserCredentials = (credentials: State<Credentials | undefined>): User => {
 
@@ -46,13 +47,26 @@ const CalculatorApp = () => {
 const AppRouter = () => {
   
   const loginscreen = useStatefull<LoginWindowStates>(() => "hidden")
+  const user = useUser()
 
   return <Router>
     <MainLayout loginScreen={loginscreen}>
       <Routes>
-        <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
-        <Route path="/new-operation" element={<HomePage loginScreen={loginscreen}/>} />
-        <Route path="/records-history" element={<HistoryRecordPage/>} />
+        {
+          user.type === "visitor" ?
+          <>
+            <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
+            <Route path="/new-operation" element={<Navigate to="/" />} />
+            <Route path="/records-history" element={<Navigate to="/" />} />
+            <Route path="/set-balance" element={<Navigate to="/" />} />
+          </> :
+          <>
+            <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
+            <Route path="/new-operation" element={<HomePage loginScreen={loginscreen}/>} />
+            <Route path="/records-history" element={<HistoryRecordPage/>} />
+            <Route path="/set-balance" element={<SetBalancePage/>} />
+          </>
+        }
       </Routes>
     </MainLayout>
   </Router>

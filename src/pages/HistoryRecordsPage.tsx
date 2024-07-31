@@ -1,123 +1,105 @@
-import { CircularProgress, Paper, Stack } from "@mui/material"
+import { Button, Paper, Stack, styled, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from "@mui/material"
 import { useStatefull } from "../utils/state"
 import { useLoggedUser } from "../hooks/context"
 import { useAsynchronous } from "../utils/asynchronism"
 import { useEffect } from "react"
 import { Text } from "../primitives/Text"
 import { Row } from "../primitives/Stack"
-import { Column, ContentCell, HeaderCell, listDataProvider, Table } from "../primitives/Table"
-import { Record } from "../utils/serialization"
-import { List } from "../utils/list"
+import { ArrowBack, ArrowForward } from "@mui/icons-material"
+import { nop } from "../utils/functional"
+import Table from '@mui/material/Table'
 
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor:  "#259d85", 
+    color: theme.palette.common.white,
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}))
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  // hide last border
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+}))
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleString()
+}
 
 export const HistoryRecordPage = () => {
     
     const user = useLoggedUser()
 
     const fetchRecordsAsync = useAsynchronous(user.actions.getRecords) 
+    const deleteRecordsAsync = useAsynchronous(user.actions.deleteRecord) 
+    const page = useStatefull(() => 0)
 
-    console.log(fetchRecordsAsync)
-
-    const records = fetchRecordsAsync.result
-
-    useEffect(fetchRecordsAsync.run({}), [user.credentials.accessToken, user.credentials.userData.username])
+    useEffect(
+      fetchRecordsAsync.run({ limit: 10, skip: page.value * 10 }), 
+      [user.credentials.accessToken, user.credentials.userData.username, page.value]
+    )
 
     return (
-        <Stack width={"100%"} alignItems="center" height="100vh" position={"relative"}>
+      <Stack width={"100%"} alignItems="center" height="100vh" position={"relative"}>
                 
-            <Text text={"Operation history"} fontSize={40} margin={4} sx={{textDecoration: "underline"}} color={"#333333"}/>
+        <Text text={"Operation history"} fontSize={40} margin={4} sx={{textDecoration: "underline"}} color={"#333333"}/>
+        {
+          fetchRecordsAsync.result !== undefined ?
+          <TableContainer component={Paper} sx={{ maxWidth: "75%" }}>
+            <Table sx={{ minWidth: 700 }}>
+              <TableHead sx={{ color: "#259d85" }}>
+                <TableRow>
+                  <StyledTableCell>Id</StyledTableCell>
+                  <StyledTableCell align="right">Date</StyledTableCell>
+                  <StyledTableCell align="right">Numeric result</StyledTableCell>
+                  <StyledTableCell align="right">Balance</StyledTableCell>
+                  <StyledTableCell align="right">Final Result</StyledTableCell>
+                  <StyledTableCell align="right">Delete </StyledTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {fetchRecordsAsync.result.map((row) => (
+                  <StyledTableRow key={row.id}>
+                    <StyledTableCell component="th" scope="row">
+                      {row.id}
+                    </StyledTableCell>
+                    <StyledTableCell align="right">{formatDate(row.date)}</StyledTableCell>
+                    <StyledTableCell align="right">{row.amount}</StyledTableCell>
+                    <StyledTableCell align="right">{row.user_balance}</StyledTableCell>
+                    <StyledTableCell align="right">{row.operation_response}</StyledTableCell>
+                    <StyledTableCell align="right">
+                      <Button 
+                        children={<Text text={"Delete record"} fontSize={10} color={"white"}/>} 
+                        sx={{ background: "#f44236" }} 
+                        onClick={deleteRecordsAsync.run({recordId: row.id})}
+                      /> 
+                    </StyledTableCell>
+                  </StyledTableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Row justifyContent={"right"} spacing={3} padding={3}>
+                  <ArrowBack 
+                    onClick={page.value > 0 ? page.apply(it => it - 1) : nop} 
+                    sx={{ cursor: "pointer" }}
+                  />
+                  <ArrowForward 
+                    onClick={fetchRecordsAsync.result?.length === 10 ? page.apply(it => it + 1) : nop} 
+                    sx={{ cursor: "pointer" }}
+                  />
+                </Row>
+          </TableContainer> :
+          <Text text={"No operations have been performed yet"} />
 
-            {
-                fetchRecordsAsync.result !== undefined && fetchRecordsAsync.status === "completed"?
-                <Paper sx={{ height:"auto"}} elevation={fetchRecordsAsync.result.length === 0 ? 0 : 5}>
-                    <Table<Record>
-                    provider={listDataProvider(fetchRecordsAsync.result)}
-                    pageSize={10}
-                    keyExtractor={value => `${value.id}`}
-                    loadingView={
-                        <CircularProgress 
-                            sx={{ 
-                            position: "absolute", 
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            fontSize: "500px",
-                            width: "360px",
-                            height: "360px"
-                            }}
-                            size={100}
-                        />
-                    }
-                    emptyView={<Text text={"No operations have been performed yet"} />}
-                    columnList={columns()}
-                    />
-                </Paper> : 
-                <CircularProgress 
-                    sx={{ 
-                        position: "absolute", 
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        fontSize: "500px",
-                        width: "360px",
-                        height: "360px"
-                    }}
-                    size={100}
-                />
-            }
-       
-        </Stack>
+        }
+      </Stack>
     )
 }
-
-const columns = (): List<Column<Record>> => [
-    {
-      header: <HeaderCell text={"Id"} textCenter />,
-      render: it =>
-        <ContentCell
-          text={`${it.id}`}
-          textCenter
-        />,
-      grow: 1,
-      width: 0,
-    },
-    {
-      header: <HeaderCell text={"Date"} textCenter />,
-      render: it => <ContentCell
-            text={it.date}
-            textCenter
-          />,
-      grow: 1,
-      width: 0,
-    },
-    {
-      header: <HeaderCell text={"Amount"} textCenter />,
-      render: it =>
-        <ContentCell
-          text={`${it.amount}`}
-          textCenter
-        />,
-      grow: 1,
-      width: 0,
-    },
-    {
-      header: <HeaderCell text={"Balance"} textCenter />,
-      render: it =>
-        <ContentCell
-          text={`${it.user_balance}`}
-          textCenter
-        />,
-      grow: 1,
-      width: 0,
-    },
-    {
-      header: <HeaderCell text={"Result"} />,
-      render: it =>
-      <ContentCell
-        text={it.operation_response}
-        textCenter
-        />,
-      grow: 1,
-      width: 0,
-    }
-  ]

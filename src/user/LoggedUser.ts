@@ -1,7 +1,7 @@
 import { operationsReg } from "../pages/Home"
 import { Async } from "../utils/asynchronism"
 import { IO } from "../utils/functional"
-import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Records, RecordsT } from "../utils/serialization"
+import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Records, RecordsT, StringT, VoidT } from "../utils/serialization"
 import { State } from "../utils/state"
 import { httpUser } from "./HttpUser"
 
@@ -14,8 +14,11 @@ export type LoggedUser = {
 export type LoggedActions = {
     logout: IO<void>,
     getBalance: () => Async<number>
-    getRecords: () => Async<Records>
-    makeOperation: (args: { type: OperationType, expr: string}) => Async<OperationResult>
+    setBalance: (args: { amount: number }) => Async<number>
+    getRecords: (args: { skip?: number, limit?: number }) => Async<Records>
+    deleteRecord: (args: { recordId: number }) => Async<string>
+    makeOperation: (args: { type: OperationType, expression: string}) => Async<OperationResult>
+    
 } 
 
 
@@ -45,11 +48,30 @@ export const buildLoggedUser = (
 
         },
 
-        getRecords: () => async () => {
+        setBalance: (args: {amount: number}) => async () => {
+
           const httpClient = httpUser(credentials.value.accessToken)
 
+          const newBalance = await httpClient.put(
+            `/balances/${credentials.value.userData.id}`,
+            { amount: args.amount },
+            BalanceT
+          )()
+
+          return newBalance.amount
+
+        },
+
+        getRecords: (args: {skip?: number, limit?: number}) => async () => {
+          const httpClient = httpUser(credentials.value.accessToken)
+
+          const skip = args.skip ?? 0
+          const limit = args.limit ?? 10
+
+          const params = new URLSearchParams({ skip: String(skip), limit: String(limit) })
+
           const records = await httpClient.get(
-            "/records",
+            `/records?${params.toString()}`,
             RecordsT
           )()
 
@@ -57,18 +79,34 @@ export const buildLoggedUser = (
 
         },
 
-        makeOperation: (args: {type: OperationType, expr: string}) => async () => {
+        deleteRecord: (args: { recordId: number }) => async () => {
+          const httpClient = httpUser(credentials.value.accessToken)
+
+          const result = await httpClient.delete(
+            `/records/${args.recordId}`,
+            StringT
+          )()
+
+          return result
+
+        },
+
+        makeOperation: (args: {type: OperationType, expression: string}) => async () => {
 
           const httpClient = httpUser(credentials.value.accessToken)
 
-          const parts: string[] = args.expr.split(operationsReg).filter(part => part.length > 0)
+          const operation = args.type
 
-          const operator1 = parts.at(0)
+          const expr = args.expression.replace(/x/g, "*")
+
+          const parts: string[] = expr.split(operationsReg).filter(part => part.length > 0)
+
+          const operator1 = operation == "square_root" ? parts.at(1) : parts.at(0)
 
           const operator2 = parts.at(2)
 
           const operationBody: OperationCreate = {
-            type: args.type,
+            type: operation,
             amount1: operator1 !== undefined ? Number(operator1) : undefined,
             amount2: operator2 !== undefined ? Number(operator2) : undefined
           } 

@@ -7,6 +7,7 @@ export const paths = {
   root: "/",
   newOperation: "/new-operation",
   operationHistory: "/records-history",
+  setBalance: "/set-balance"
 }
 
 export const useNavigation = () => {
@@ -25,6 +26,7 @@ export const useNavigation = () => {
         root: push(paths.root),
         newOperation: push(paths.newOperation),
         operationHistory: push(paths.operationHistory),
+        setBalance: push(paths.setBalance),
       },
       back: back
     }

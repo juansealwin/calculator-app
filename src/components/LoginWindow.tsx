@@ -286,11 +286,6 @@ export const RegisterForm = (
                         text={"Sign up has been successfully completed"}
                         fontSize={14}
                     />
-                    <Button
-                        sx={{marginTop: 3}}
-                        onClick={setTo(props.screen, "login")}
-                        children={"Atrás"}
-                    />   
                 </Row>,
                 running: <CircularProgress/>,
                 idle: <></>

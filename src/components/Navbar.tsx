@@ -16,6 +16,7 @@ export const Navbar = (
 ) => {
 
   const user = useUser()
+  const nav = useNavigation()
 
   return(
     <Row 
@@ -41,6 +42,7 @@ export const Navbar = (
           text={"Calculator App"}
           fontSize={40}
           left={"5%"}
+          onClick={nav.goTo.setBalance}
         />
       </Row>
       <Row/>
@@ -77,7 +79,7 @@ const LoggedNavbar = () => {
   const getBalanceAsync = useAsynchronous(user.actions.getBalance)
 
   useEffect(getBalanceAsync.run({}), [user.credentials.userData.id, user.credentials.accessToken])
-  console.log(getBalanceAsync.result)
+
   return(
     <Row 
       justifyContent={"space-around"} 

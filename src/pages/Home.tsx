@@ -5,9 +5,10 @@ import { Text } from "../primitives/Text"
 import { useStatefull, setTo, State } from "../utils/state"
 import { LoginWindowStates } from "../components/LoginWindow"
 import { useLoggedUser, useUser } from "../hooks/context"
-import { OperationType } from "../utils/serialization"
+import { OperationResult, OperationType } from "../utils/serialization"
 import { nop, sequenceIO } from "../utils/functional"
 import { useAsynchronous } from "../utils/asynchronism"
+import { isNumber } from "../utils/utils"
 
 const operationButtonSx: SxProps = {
     width: "30%",
@@ -47,14 +48,17 @@ const numberButtonSx: SxProps = {
 
 export const operationsReg = /(\+|\-|\*|\/|√|rand)/
 
-const checkExpression = (expr: string, operationType: OperationType | undefined): boolean => {
+const checkExpression = (expression: string, operationType: OperationType | undefined): boolean => {
+    
     if (operationType === undefined)
         return false
 
+    const expr = expression.replace(/x/g, "*")
+
     const parts: string[] = expr.split(operationsReg).filter(part => part.length > 0)
 
-    const isNumber = (str: string) => !isNaN(Number(str))
-
+    
+    
     switch (operationType) {
         case "addition":
         case "subtraction":
@@ -63,9 +67,9 @@ const checkExpression = (expr: string, operationType: OperationType | undefined)
         case "division":
             return parts.length === 3 && isNumber(parts[0]) && isNumber(parts[2]) && parts[0].length > 0 && parts[2].length > 0 && Number(parts[2]) !== 0
         case "square_root":
-            return parts.length === 2 && parts[0] === "sqrt" && isNumber(parts[1]) && Number(parts[1]) > 0
+            return parts.length === 2 && parts[0] === "√" && isNumber(parts[1]) && Number(parts[1]) > 0
         case "random_string":
-            return parts.length === 1 && parts[0] === "random"
+            return parts.length === 1 && parts[0] === "rand"
         default:
             return false
     }
@@ -80,12 +84,12 @@ export const HomePage = (
     const calcWidth = 400
     const calcHeight = calcWidth * 1.5
     const display = useStatefull(() => "")
-
+    const showResult = useStatefull(() => false)
+    const result = useStatefull<OperationResult | undefined>(() => undefined)
+    
     const operationType = useStatefull<OperationType | undefined>(() => undefined)
-
+    
     const handleButtonClick = (value: string) => setTo(display, `${display.value}${value}`)
-
-    const showResult = useStatefull(() => false) 
 
     return (
         <Stack width={"100%"} alignItems="center" justifyContent="center" height="100vh">
@@ -93,7 +97,7 @@ export const HomePage = (
                 width={"100%"}
                 height="100vh"
                 alignItems="center"
-                justifyContent="center"
+                marginTop={10}
                 spacing={3}
                 sx={{ overflow: "hidden" }}
             >
@@ -147,18 +151,18 @@ export const HomePage = (
                                 fontSize={40} 
                             />
                             {
-                                showResult.value && <>
+                                result.value !== undefined && showResult.value ? <>
                                     <Text 
-                                        children={`Res = ${display.value}`} 
+                                        children={`Res = ${result.value?.result}`} 
                                         color={"white"} 
                                         fontSize={24} 
                                     />
                                     <Text  
-                                        children={`Cost = ${display.value}`} 
+                                        children={`Cost = ${result.value?.cost}`} 
                                         color={"white"} 
                                         fontSize={24} 
                                     />
-                                </>
+                                </> : <></>
                             }
                         </Stack>
 
@@ -301,13 +305,25 @@ export const HomePage = (
                                 <Button
                                     variant="contained"
                                     sx={{...eraseButtonSx, flexGrow: 1}}
-                                    onClick={sequenceIO([setTo(display, ""), setTo(showResult, false), setTo(operationType, undefined)])}
+                                    onClick={
+                                        sequenceIO([
+                                            setTo(display, ""), 
+                                            setTo(showResult, false),
+                                            setTo(result, undefined), 
+                                            setTo(operationType, undefined)
+                                        ])
+                                    }
                                     children={"CE"}
                                 />
                                 {
                                     user.type === "visitor" ? 
                                         <EqualsVistor loginScreen={props.loginScreen}/> :
-                                        <EqualsLogged display={display} operationType={operationType} showResult={showResult}/>
+                                        <EqualsLogged 
+                                            display={display} 
+                                            operationType={operationType} 
+                                            result={result} 
+                                            showResult={showResult}
+                                        />
                                 }
                             </Stack>
                             
@@ -334,6 +350,7 @@ const EqualsLogged = (
     props: {
         display: State<string>
         operationType: State<OperationType | undefined>
+        result: State<OperationResult | undefined>
         showResult: State<boolean>
     }
 ) => {
@@ -341,19 +358,26 @@ const EqualsLogged = (
     const operationType = props.operationType.value
     const loggedUser = useLoggedUser()
     const makeOperationAsync = useAsynchronous(loggedUser.actions.makeOperation)
-    const runOperation = operationType !== undefined ? makeOperationAsync.run({expr: display.value, type: operationType}) : nop
+    
+    useEffect(
+        makeOperationAsync.status === "completed" && props.showResult ? 
+            setTo(props.result, makeOperationAsync.result) : 
+            makeOperationAsync.status === "failed" && makeOperationAsync.error?.message === "Status code 402" ?
+                setTo(props.result, ({ cost: 0, result: "Insufficient balance" })) :
+                nop,
+        [props.showResult, makeOperationAsync.status]
+    )
 
-    useEffect(makeOperationAsync.status === "completed" ? setTo(props.showResult, true) : nop)
-    // console.log(loggedUser)
-    // console.log(operationType)
-    // console.log(checkExpression(display.value, operationType ?? "addition"))
     return(
         <Button
             variant="contained"
             sx={{...operationButtonSx, flexGrow: 1}}
             onClick={
-                checkExpression(display.value, operationType) ?
-                    runOperation :
+                checkExpression(display.value, operationType) && operationType !== undefined ?
+                    sequenceIO([
+                        makeOperationAsync.run({expression: display.value, type: operationType}), 
+                        setTo(props.showResult, true)
+                    ]) :
                     setTo(display, "Syntax Error") 
             }
             children={"="}

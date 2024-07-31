@@ -1,4 +1,4 @@
-import { operationsReg } from "../pages/Home"
+import { operationsReg } from "../pages/HomeV2"
 import { Async } from "../utils/asynchronism"
 import { IO } from "../utils/functional"
 import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Records, RecordsT, StringT, VoidT } from "../utils/serialization"
@@ -17,7 +17,8 @@ export type LoggedActions = {
     setBalance: (args: { amount: number }) => Async<number>
     getRecords: (args: { skip?: number, limit?: number }) => Async<Records>
     deleteRecord: (args: { recordId: number }) => Async<string>
-    makeOperation: (args: { type: OperationType, expression: string}) => Async<OperationResult>
+    makeOperation: (args: { type: OperationType, amount1?: number, amount2?: number}) => Async<OperationResult>
+    makeOperationV2: (args: { type: OperationType, expression: string}) => Async<OperationResult>
     
 } 
 
@@ -91,7 +92,32 @@ export const buildLoggedUser = (
 
         },
 
-        makeOperation: (args: {type: OperationType, expression: string}) => async () => {
+        makeOperation: (args: { type: OperationType, amount1?: number, amount2?: number}) => async () => {
+          
+          const httpClient = httpUser(credentials.value.accessToken)
+
+          const operation = args.type
+
+          const operator1 = args.amount1
+
+          const operator2 = args.amount2
+
+          const operationBody: OperationCreate = {
+            type: operation,
+            amount1: operator1,
+            amount2: operator2 
+          } 
+
+          const resultOperation = await httpClient.post(
+            "/operations",
+            operationBody,
+            OperationResultT
+          )()
+
+          return resultOperation
+        },
+
+        makeOperationV2: (args: {type: OperationType, expression: string}) => async () => {
 
           const httpClient = httpUser(credentials.value.accessToken)
 

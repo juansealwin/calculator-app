@@ -1,3 +1,4 @@
+import { RecordColumns, SortOrder } from "../pages/HistoryRecordsPage"
 import { operationsReg } from "../pages/HomeV2"
 import { Async } from "../utils/asynchronism"
 import { IO } from "../utils/functional"
@@ -15,7 +16,7 @@ export type LoggedActions = {
     logout: IO<void>,
     getBalance: () => Async<number>
     setBalance: (args: { amount: number }) => Async<number>
-    getRecords: (args: { skip?: number, limit?: number }) => Async<Records>
+    getRecords: (args: { skip?: number, limit?: number, search?: string, sortBy?: RecordColumns, sortOrder?: SortOrder }) => Async<Records>
     deleteRecord: (args: { recordId: number }) => Async<Record>
     makeOperation: (args: { type: OperationType, amount1?: number, amount2?: number}) => Async<OperationResult>
     makeOperationV2: (args: { type: OperationType, expression: string}) => Async<OperationResult>
@@ -63,14 +64,25 @@ export const buildLoggedUser = (
 
         },
 
-        getRecords: (args: {skip?: number, limit?: number}) => async () => {
+        getRecords: (args: { skip?: number, limit?: number, search?: string, sortBy?: RecordColumns, sortOrder?: SortOrder }) => async () => {
           const httpClient = httpUser(credentials.value.accessToken)
 
-          const skip = args.skip ?? 0
-          const limit = args.limit ?? 10
+          const params = {
+            skip: args.skip ?? 0,
+            limit: args.limit ?? 10,
+            search: args.search ?? "",
+            sort_by: args.sortBy ?? "",
+            sort_order: args.sortOrder ?? 'asc'
+          }
+        
+          const queryString = Object.entries(params)
+            .filter(([key, value]) => value !== "")
+            .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
+            .join("&")
+        
 
-          const uri = `/records?skip=${skip}&limit=${limit}`
-
+          const uri = `/records?${queryString}`
+          
           const records = await httpClient.get(
             uri,
             RecordsT

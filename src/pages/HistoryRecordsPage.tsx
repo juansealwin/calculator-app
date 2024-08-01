@@ -1,5 +1,5 @@
-import { Button, Paper, Stack, styled, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from "@mui/material"
-import { useStatefull } from "../utils/state"
+import { Button, FormControl, InputLabel, MenuItem, Paper, Select, Stack, styled, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow, TextField } from "@mui/material"
+import { setTo, useStatefull } from "../utils/state"
 import { useLoggedUser } from "../hooks/context"
 import { useAsynchronous } from "../utils/asynchronism"
 import { useEffect } from "react"
@@ -8,7 +8,8 @@ import { Row } from "../primitives/Stack"
 import { ArrowBack, ArrowForward } from "@mui/icons-material"
 import { nop } from "../utils/functional"
 import Table from '@mui/material/Table'
-import { List } from "../utils/list"
+import SearchIcon from "@mui/icons-material/Search"
+import { StringEditor } from "../primitives/StringEditor"
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -35,6 +36,10 @@ const formatDate = (dateString: string) => {
   return date.toLocaleString()
 }
 
+export type RecordColumns = "id" | "date" | "amount" | "user_balance" | "operation_response"
+
+export type SortOrder = "asc" | "dsc"
+
 export const HistoryRecordPage = () => {
     
     const user = useLoggedUser()
@@ -42,17 +47,76 @@ export const HistoryRecordPage = () => {
     const fetchRecordsAsync = useAsynchronous(user.actions.getRecords) 
     const deleteRecordsAsync = useAsynchronous(user.actions.deleteRecord) 
     const page = useStatefull(() => 0)
-    //const deletedRecords = useStatefull<List<number>>(() => [])
+
+    const search = useStatefull(() => "")
+    const sortBy = useStatefull<RecordColumns>(() => "date")
+    const sortOrder = useStatefull<SortOrder>(() => "asc")
+
+    const runFetchRecords = fetchRecordsAsync.run({ 
+      limit: 10, 
+      skip: page.value * 10, 
+      search: search.value, 
+      sortBy: sortBy.value, 
+      sortOrder: sortOrder.value 
+    })
 
     useEffect(
-      fetchRecordsAsync.run({ limit: 10, skip: page.value * 10 }), 
-      [user.credentials.accessToken, user.credentials.userData.username, page.value]
+      runFetchRecords, 
+      [user.credentials.accessToken, user.credentials.userData.username, page.value, deleteRecordsAsync.result]
     )
+    
 
     return (
       <Stack width={"100%"} alignItems="center" height="100vh" position={"relative"}>
                 
         <Text text={"Operation history"} fontSize={40} margin={4} sx={{textDecoration: "underline"}} color={"#333333"}/>
+         
+        <Row spacing={5} padding={2}>         
+          <StringEditor
+            label="Search"            
+            state={search}
+            style={{ width: 250 }}
+          />
+      
+          <FormControl variant="outlined" sx={{ width: 250 }}>
+            <InputLabel>Sort By</InputLabel>
+            <Select
+              value={sortBy.value}
+              onChange={(e) => {
+                const newValue = e.target.value as RecordColumns
+                setTo(sortBy, newValue)
+              }}
+              label="Sort By"
+            >
+              <MenuItem value="id">Id</MenuItem>
+              <MenuItem value="date">Date</MenuItem>
+              <MenuItem value="amount">Numeric Result</MenuItem>
+              <MenuItem value="user_balance">Balance</MenuItem>
+              <MenuItem value="operation_response">Final Result</MenuItem>
+            </Select>
+          </FormControl>
+      
+          <FormControl variant="outlined" sx={{ width: 250 }}>
+            <InputLabel>Sort Order</InputLabel>
+            <Select
+              value={sortOrder.value}
+              onChange={(e) => {
+                const newValue = e.target.value as SortOrder
+                setTo(sortOrder, newValue)
+              }}
+              label="Sort Order"
+            >
+              <MenuItem value="asc">Ascending</MenuItem>
+              <MenuItem value="desc">Descending</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Button 
+            variant="contained" 
+            children={<Row spacing={1.5}><Text text={"Buscar"}/><SearchIcon /></Row>}
+            onClick={runFetchRecords}
+          />
+        </Row>
         {
           fetchRecordsAsync.result !== undefined ?
           <TableContainer component={Paper} sx={{ maxWidth: "75%" }}>

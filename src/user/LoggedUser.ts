@@ -1,7 +1,7 @@
 import { operationsReg } from "../pages/HomeV2"
 import { Async } from "../utils/asynchronism"
 import { IO } from "../utils/functional"
-import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Records, RecordsT, StringT, VoidT } from "../utils/serialization"
+import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Record, Records, RecordsT, RecordT, StringT, VoidT } from "../utils/serialization"
 import { State } from "../utils/state"
 import { httpUser } from "./HttpUser"
 
@@ -16,7 +16,7 @@ export type LoggedActions = {
     getBalance: () => Async<number>
     setBalance: (args: { amount: number }) => Async<number>
     getRecords: (args: { skip?: number, limit?: number }) => Async<Records>
-    deleteRecord: (args: { recordId: number }) => Async<string>
+    deleteRecord: (args: { recordId: number }) => Async<Record>
     makeOperation: (args: { type: OperationType, amount1?: number, amount2?: number}) => Async<OperationResult>
     makeOperationV2: (args: { type: OperationType, expression: string}) => Async<OperationResult>
     
@@ -69,10 +69,10 @@ export const buildLoggedUser = (
           const skip = args.skip ?? 0
           const limit = args.limit ?? 10
 
-          const params = new URLSearchParams({ skip: String(skip), limit: String(limit) })
+          const uri = `/records?skip=${skip}&limit=${limit}`
 
           const records = await httpClient.get(
-            `/records?${params.toString()}`,
+            uri,
             RecordsT
           )()
 
@@ -85,7 +85,7 @@ export const buildLoggedUser = (
 
           const result = await httpClient.delete(
             `/records/${args.recordId}`,
-            StringT
+            RecordT
           )()
 
           return result

@@ -8,6 +8,7 @@ import { Row } from "../primitives/Stack"
 import { ArrowBack, ArrowForward } from "@mui/icons-material"
 import { nop } from "../utils/functional"
 import Table from '@mui/material/Table'
+import { List } from "../utils/list"
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -41,6 +42,7 @@ export const HistoryRecordPage = () => {
     const fetchRecordsAsync = useAsynchronous(user.actions.getRecords) 
     const deleteRecordsAsync = useAsynchronous(user.actions.deleteRecord) 
     const page = useStatefull(() => 0)
+    //const deletedRecords = useStatefull<List<number>>(() => [])
 
     useEffect(
       fetchRecordsAsync.run({ limit: 10, skip: page.value * 10 }), 
@@ -62,24 +64,24 @@ export const HistoryRecordPage = () => {
                   <StyledTableCell align="right">Numeric result</StyledTableCell>
                   <StyledTableCell align="right">Balance</StyledTableCell>
                   <StyledTableCell align="right">Final Result</StyledTableCell>
-                  <StyledTableCell align="right">Delete </StyledTableCell>
+                  <StyledTableCell align="center">Delete </StyledTableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {fetchRecordsAsync.result.map((row) => (
                   <StyledTableRow key={row.id}>
-                    <StyledTableCell component="th" scope="row">
-                      {row.id}
-                    </StyledTableCell>
+                    <StyledTableCell component="th" scope="row">{row.id}</StyledTableCell>
                     <StyledTableCell align="right">{formatDate(row.date)}</StyledTableCell>
                     <StyledTableCell align="right">{row.amount}</StyledTableCell>
                     <StyledTableCell align="right">{row.user_balance}</StyledTableCell>
                     <StyledTableCell align="right">{row.operation_response}</StyledTableCell>
-                    <StyledTableCell align="right">
+                    <StyledTableCell align="center">
                       <Button 
                         children={<Text text={"Delete record"} fontSize={10} color={"white"}/>} 
-                        sx={{ background: "#f44236" }} 
+                        sx={{ background: "#f44236", "&:hover": { backgroundColor: "#e43226" } }} 
+                        variant="contained"
                         onClick={deleteRecordsAsync.run({recordId: row.id})}
+                        //disabled={deletedRecords.value.includes(row.id)}
                       /> 
                     </StyledTableCell>
                   </StyledTableRow>

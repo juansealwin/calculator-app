@@ -90,7 +90,9 @@ export const RecordT = ProductOf({
   amount: NumberT,
   user_balance: NumberT,
   operation_response: StringT,
-  date: StringT
+  date: StringT,
+  is_deleted: BooleanT,
+  deleted_at: StringT
 })
 
 

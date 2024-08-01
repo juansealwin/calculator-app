@@ -96,7 +96,15 @@ const VisitorHome = (
 
             <NumberEditor sx={{ width: "400px" }} label="Operator 2" state={operator2}/>
 
-            <Button variant="contained" children={<Text text={"Calculate!"} onClick={setTo(props.loginScreen, "login")}/>}/>
+            <Row spacing={3}>
+                <Button 
+                    variant="contained" 
+                    children={<Text text={"Calculate!"} 
+                    onClick={setTo(props.loginScreen, "login")}/>}
+                    sx={{ background: "#259d85", width: "100%", height: "50px", "&:hover": { backgroundColor: "#00796B" } }}
+                    //sx={{ width: "100%" }}
+                />
+            </Row>
         </>
     )
 }
@@ -138,7 +146,7 @@ const LoggedHome = () => {
             nop,
         [makeOperationAsync]
     )
-    console.log(cost)
+    
     return(
         <>
             <OperatorEditor operationState={operationType}/>

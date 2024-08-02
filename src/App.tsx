@@ -25,7 +25,6 @@ const useUserCredentials = (credentials: State<Credentials | undefined>): User =
   return user
 }
 
-
 const CalculatorApp = () => {
 
   const credentials = usePersistentState<Credentials | undefined>(
@@ -43,33 +42,34 @@ const CalculatorApp = () => {
   )
 }
 
-
 const AppRouter = () => {
   
   const loginscreen = useStatefull<LoginWindowStates>(() => "hidden")
   const user = useUser()
 
-  return <Router>
-    <MainLayout loginScreen={loginscreen}>
-      <Routes>
-        {
-          user.type === "visitor" ?
-          <>
-            <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
-            <Route path="/new-operation" element={<Navigate to="/" />} />
-            <Route path="/records-history" element={<Navigate to="/" />} />
-            <Route path="/set-balance" element={<Navigate to="/" />} />
-          </> :
-          <>
-            <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
-            <Route path="/new-operation" element={<HomePage loginScreen={loginscreen}/>} />
-            <Route path="/records-history" element={<HistoryRecordPage/>} />
-            <Route path="/set-balance" element={<SetBalancePage/>} />
-          </>
-        }
-      </Routes>
-    </MainLayout>
-  </Router>
+  return (
+    <Router basename="/calculator-app">
+      <MainLayout loginScreen={loginscreen}>
+        <Routes>
+          {
+            user.type === "visitor" ?
+            <>
+              <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
+              <Route path="/new-operation" element={<Navigate to="/" />} />
+              <Route path="/records-history" element={<Navigate to="/" />} />
+              <Route path="/set-balance" element={<Navigate to="/" />} />
+            </> :
+            <>
+              <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
+              <Route path="/new-operation" element={<HomePage loginScreen={loginscreen}/>} />
+              <Route path="/records-history" element={<HistoryRecordPage/>} />
+              <Route path="/set-balance" element={<SetBalancePage/>} />
+            </>
+          }
+        </Routes>
+      </MainLayout>
+    </Router>
+  )
 }
 
 export default CalculatorApp

@@ -60,7 +60,8 @@ export const buildVisitorUser = (
           username: args.username, 
           password: args.password
         }
-        const fetchCredentials  =  await httpVisitorUser.post(
+        
+        await httpVisitorUser.post(
           "/register", 
           bodyRegister,
           CredentialsT

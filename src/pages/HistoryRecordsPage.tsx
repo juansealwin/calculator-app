@@ -1,4 +1,4 @@
-import { Button, FormControl, InputLabel, MenuItem, Paper, Select, Stack, styled, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow, TextField } from "@mui/material"
+import { Button, FormControl, InputLabel, MenuItem, Paper, Select, Stack, styled, TableBody, TableCell, tableCellClasses, TableContainer, TableHead, TableRow } from "@mui/material"
 import { setTo, useStatefull } from "../utils/state"
 import { useLoggedUser } from "../hooks/context"
 import { useAsynchronous } from "../utils/asynchronism"
@@ -62,7 +62,7 @@ export const HistoryRecordPage = () => {
 
     useEffect(
       runFetchRecords, 
-      [user.credentials.accessToken, user.credentials.userData.username, page.value, deleteRecordsAsync.result]
+      [user.credentials.accessToken, page.value, deleteRecordsAsync.result]
     )
     
 

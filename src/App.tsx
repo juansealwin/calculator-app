@@ -19,7 +19,7 @@ const useUserCredentials = (credentials: State<Credentials | undefined>): User =
 
   const user = useMemo(
     () => buildUser(credentials, queryClient), 
-    [credentials.value?.accessToken]
+    [credentials, queryClient]
   )
 
   return user

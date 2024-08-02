@@ -77,17 +77,17 @@ export const Input = (
       endAdornment: props.type === "password" && props.showpassword  !== undefined?
         <IconButton
           aria-label="toggle password visibility"
-          onClick={setTo(props.showpassword , !props.showpassword ?.value)}
+          onClick={setTo(props.showpassword, !props.showpassword?.value)}
           onMouseDown={(event) => event.preventDefault()}
           edge="end"
         >
-          {props.showpassword .value ? <Visibility /> : <VisibilityOff />}
+          {props.showpassword.value ? <Visibility /> : <VisibilityOff />}
         </IconButton> : props.suffix
     }}
     {...props}
     type={
-      props.showpassword  === undefined ? 
+      props.showpassword === undefined ? 
         "text" : 
-        props.showpassword .value ? "text" : "password"
+        props.showpassword.value ? "text" : "password"
     }
   />

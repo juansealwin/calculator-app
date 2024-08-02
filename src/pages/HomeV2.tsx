@@ -46,7 +46,7 @@ const numberButtonSx: SxProps = {
     }
 }
 
-export const operationsReg = /(\+|\-|\*|\/|√|rand)/
+export const operationsReg = /(\+|-|\*|\/|√|rand)/
 
 const checkExpression = (expression: string, operationType: OperationType | undefined): boolean => {
     

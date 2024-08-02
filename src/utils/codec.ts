@@ -60,7 +60,7 @@ export const listCodec = <T>(
 ): Codec<List<T>, Json> => ({
     encode: value => value.map(codec.encode),
     decode: encoded => {
-      if (!Array.isArray(encoded)) return throwError({name: "Codec error"+` ${encoded}`, message: "not an array"})
-      return encoded.map(codec.decode)
+      if (!Array.isArray(encoded)) return throwError({name: `Codec error ${encoded}`, message: "not an array"})
+        return encoded.map(codec.decode)
     }
   })

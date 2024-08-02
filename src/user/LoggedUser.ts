@@ -2,7 +2,7 @@ import { RecordColumns, SortOrder } from "../pages/HistoryRecordsPage"
 import { operationsReg } from "../pages/HomeV2"
 import { Async } from "../utils/asynchronism"
 import { IO } from "../utils/functional"
-import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Record, Records, RecordsT, RecordT, StringT, VoidT } from "../utils/serialization"
+import { BalanceT, Credentials, OperationCreate, OperationResult, OperationResultT, OperationType, Record, Records, RecordsT, RecordT } from "../utils/serialization"
 import { State } from "../utils/state"
 import { httpUser } from "./HttpUser"
 
@@ -139,7 +139,7 @@ export const buildLoggedUser = (
 
           const parts: string[] = expr.split(operationsReg).filter(part => part.length > 0)
 
-          const operator1 = operation == "square_root" ? parts.at(1) : parts.at(0)
+          const operator1 = operation === "square_root" ? parts.at(1) : parts.at(0)
 
           const operator2 = parts.at(2)
 

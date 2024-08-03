@@ -8,7 +8,7 @@ export const CONTENT_TYPES = {
   }
 }
 
-const API_URL = process.env.SRV_API_URL || "http://localhost:8000";
+const API_URL = process.env.REACT_APP_SRV_API_URL
 
 export type HttpClient = {
 
@@ -54,7 +54,7 @@ export const httpRequest = <T>(
   }
 
 export const httpUser = (authToken?: string): HttpClient => ({
-
+  
   get: (url, resultType) =>
     httpRequest({
       method: "GET",

@@ -16,9 +16,18 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 ## Environment Variables
 
-This app uses env variables (create a `.env` file in the root of the project):
+The app relies on environment variables. Create a .env file in the root directory of the project with the following variables:
 
-REACT_APP_SRV_API_URL=http://localhost:8000/
+`REACT_APP_SRV_API_URL`: The URL for the server API. For local development, set this to `http://localhost:8000/`.
 
-- `REACT_APP_SRV_API_URL`: The URL for the server api. To run locally `http://localhost:8000/`.
+Example .env file:
 
+`REACT_APP_SRV_API_URL=http://localhost:8000/`
+
+## Deployment
+
+For deploying the app, the following scripts are used:
+
+Build: `npm run build`
+
+Deploy: `npm run deploy`

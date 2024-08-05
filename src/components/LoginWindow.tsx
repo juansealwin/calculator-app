@@ -272,7 +272,11 @@ export const RegisterForm = (
 
                 </Col>
 
-                <Text text="Password Requirements: 6 characters long, contain at least one letter, contain at least one number" fontSize={12} color={"#666666"}/> 
+                <Text 
+                  text="Password Requirements: At least 7 characters long, include at least one letter, one number, and one special character" 
+                  fontSize={12} 
+                  color={"#666666"} 
+                />
                 
             </Col>
           </Row>

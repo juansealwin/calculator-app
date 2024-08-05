@@ -3,14 +3,16 @@ import { throwError } from "./error"
 import { id } from "./functional"
 import { Json, ListOf, Model, Obtain, OptionalOf, ProductOf, StringEnumOf } from "./model"
 
-export const VoidT: Model<void> = {
-  codec: {
-    encode: () => undefined,
-    decode: () => undefined
-  },
-  check: (value): value is void => true
+const CredentialsCodec: Codec<Credentials, string> = {
+  encode: (credentials) => JSON.stringify(credentials),
+  decode: (encoded) => JSON.parse(encoded) as Credentials
 }
-  
+
+export const OptionalCredentialsCodec: Codec<Credentials | undefined, string> = {
+  encode: (credentials) => credentials === undefined ? '' : CredentialsCodec.encode(credentials),
+  decode: (encoded) => encoded === '' ? undefined : CredentialsCodec.decode(encoded)
+}
+
 export const stringCodec: Codec<string, Json> = {
   encode: id,
   decode: value => StringT.check(value) ? value : throwError({name: `${value}`, message: `${value} is not a string`} )
@@ -41,12 +43,6 @@ export const NumberT: Model<number> = {
   check: (value): value is number => typeof value === "number"
 }
 
-
-export const jsonToStringCodec: Codec<Json, string> = {
-  encode: value => JSON.stringify(value),
-  decode: encoded => JSON.parse(encoded)
-}
-
 export const UserDataT = ProductOf({
   id: StringT,
   username: StringT,
@@ -56,7 +52,7 @@ export const UserDataT = ProductOf({
 export const CredentialsT = ProductOf({
   accessToken: StringT,
   tokenType: StringT,
-  userData: UserDataT,
+  userData: UserDataT
 })
 
 export const OperationTypeT = StringEnumOf([
@@ -94,7 +90,6 @@ export const RecordT = ProductOf({
   is_deleted: BooleanT,
   deleted_at: StringT
 })
-
 
 export const RecordsT = ListOf(RecordT)
 

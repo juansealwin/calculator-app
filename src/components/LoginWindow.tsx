@@ -3,12 +3,12 @@ import { applyLens, lens, setTo, State, useStatefull } from "../utils/state"
 import { Button, CircularProgress, Dialog } from "@mui/material"
 import { IO, nop } from "../utils/functional"
 import { Check, Close, Lock, Person } from "@mui/icons-material"
-import { Col, Row } from "../primitives/Stack"
-import { enumMatch, matchEnumLazy } from "../utils/pattern-matching"
-import { useVisitorUser } from "../hooks/context"
+import { Col, Row } from "./primitives/Stack"
+import { enumMatch } from "../utils/pattern-matching"
 import { useAsynchronous } from "../utils/asynchronism"
-import { Text } from "../primitives/Text"
-import { StringEditor } from "../primitives/StringEditor"
+import { Text } from "./primitives/Text"
+import { StringEditor } from "./primitives/StringEditor"
+import { useVisitorUser } from "../hooks/context"
 
 
 export type LoginWindowStates = "register" | "login" | "hidden"
@@ -71,16 +71,16 @@ export const ContentLoginWindow = (
     justifyContent={"center"}
     alignItems={"center"}     
   >
-    { matchEnumLazy(props.screen.value)({
-        login: () => 
+    { enumMatch(props.screen.value)({
+        login: 
           <LoginForm 
             screen={props.screen}
           />,
-        register: () => 
+        register: 
           <RegisterForm 
             screen={props.screen}
           />,
-        hidden: () => <></>
+        hidden: <></>
     })
     }
      <Close onClick={props.onClose} sx={{ position: "absolute", top: 5, right: 5, cursor: "pointer" }}/>
@@ -105,7 +105,7 @@ export const LoginForm = (
     const visitorUser = useVisitorUser()
     const login = useAsynchronous(visitorUser.actions.login)
     const runLogin = login.run({username: credentials.value.username, password: credentials.value.password})
-  
+
     return ( 
         <Col
           width={"80%"}

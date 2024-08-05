@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useContext } from "react"
 import { User } from "../user/User"
 import { throwError } from "../utils/error"
 import { VisitorUser } from "../user/VisitorUser"
@@ -8,7 +8,11 @@ import { LoggedUser } from "../user/LoggedUser"
 export const UserContext = React.createContext<User | undefined>(undefined)
 
 export const useUserContext = () => {
-  return React.useContext(UserContext)
+  const context = useContext(UserContext)
+  if (context === undefined) {
+    throw new Error('useUserContext must be used within a UserProvider')
+  }
+  return context
 }
 
 export const isUser = (user: User | undefined): user is User => 

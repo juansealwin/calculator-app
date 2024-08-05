@@ -1,4 +1,4 @@
-import { Codec, enumCodec, listCodec, optionalCodec, withDefaultCodec } from "./codec"
+import { Codec, enumCodec, listCodec, optionalCodec } from "./codec"
 import { List } from "./list"
 import { StringT } from "./serialization"
 
@@ -47,14 +47,6 @@ export const codecProduct = <A extends Record<keyof never, unknown>>(
     )
   }
 }
-
-export const withDefault = <T>(
-  model: Model<T>,
-  defaultValue: T
-): Model<T> => ({
-    codec: withDefaultCodec(model.codec, defaultValue),
-    check: model.check
-  })
 
 export const OptionalOf = <T>(
   model: Model<T>

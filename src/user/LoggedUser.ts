@@ -26,10 +26,9 @@ export type LoggedActions = {
 
 export const buildLoggedUser = (
     credentials: State<Credentials>,
-    logout: IO<void>,
+    logout: IO<void>
   ): LoggedUser =>  {
       
-
     return {
       type: "logged",
   
@@ -76,7 +75,7 @@ export const buildLoggedUser = (
           }
         
           const queryString = Object.entries(params)
-            .filter(([key, value]) => value !== "")
+            .filter(([_key, value]) => value !== "")
             .map(([key, value]) => `${key}=${encodeURIComponent(value as string)}`)
             .join("&")
         

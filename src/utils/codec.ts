@@ -1,33 +1,12 @@
 import { throwError } from "./error"
 import { List } from "./list"
-import { Json, Model } from "./model"
+import { Json } from "./model"
 import { letIn } from "./pattern-matching"
-import { jsonToStringCodec } from "./serialization"
 
 export type Codec<T, E> = {
   encode: (value: T) => E
   decode: (encoded: E) => T
-}
-
-export const codecCompose = <A, B, C>(
-  lhs: Codec<A, B>,
-  rhs: Codec<B, C>
-): Codec<A, C> => ({
-  encode: value => rhs.encode(lhs.encode(value)),
-  decode: encoded => lhs.decode(rhs.decode(encoded))
-})
-   
-  
-export const withDefaultCodec = <A>(
-  codec: Codec<A, Json>,
-  defaultValue: A
-): Codec<A, Json> => ({
-    encode: codec.encode,
-    decode: encoded => encoded === undefined ? defaultValue : codec.decode(encoded)
-  })
-
-export const stringCodecOf = <T>(model: Model<T>): Codec<T, string> => 
-  codecCompose(model.codec, jsonToStringCodec) 
+}   
 
 export const optionalCodec = <T>(
   codec: Codec<T, Json>

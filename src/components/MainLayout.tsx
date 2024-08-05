@@ -9,6 +9,7 @@ export const MainLayout = (
   props: {
     children?: React.ReactNode
     loginScreen: State<LoginWindowStates>
+    reloadBalance: boolean
   }
 ) => {
 
@@ -24,7 +25,7 @@ export const MainLayout = (
         minHeight: '100vh', 
       }}
     >
-      <Navbar loginScreen={props.loginScreen}/>
+      <Navbar loginScreen={props.loginScreen} reloadBalance={props.reloadBalance}/>
       <Box sx={{ width: "100%", height: "100%" }}>
         {props.children}
         {

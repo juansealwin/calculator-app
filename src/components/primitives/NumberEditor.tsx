@@ -1,13 +1,13 @@
 import React from 'react'
-import TextField from '@mui/material/TextField'
-import { setTo, State } from '../utils/state'
-import { SxProps } from '@mui/material'
+import { setTo, State } from '../../utils/state'
+import { SxProps, TextField } from '@mui/material'
 
 const NumberEditor = (
     props: { 
         state: State<number | undefined> 
         sx?: SxProps
         label?: string
+        disable?: boolean 
     }
 ) => {
 
@@ -26,6 +26,7 @@ const NumberEditor = (
   return (
     <TextField
       fullWidth
+      disabled={props.disable}
       label={props.label}
       type="number"
       value={props.state.value !== undefined ? props.state.value : ''}

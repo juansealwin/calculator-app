@@ -6,8 +6,7 @@ import { useNavigate } from "react-router-dom"
 export const paths = {
   root: "/",
   newOperation: "/new-operation",
-  operationHistory: "/records-history",
-  setBalance: "/set-balance"
+  operationHistory: "/records-history"
 }
 
 export const useNavigation = () => {
@@ -25,8 +24,7 @@ export const useNavigation = () => {
       goTo: {
         root: push(paths.root),
         newOperation: push(paths.newOperation),
-        operationHistory: push(paths.operationHistory),
-        setBalance: push(paths.setBalance),
+        operationHistory: push(paths.operationHistory)
       },
       back: back
     }

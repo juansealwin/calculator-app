@@ -1,69 +1,72 @@
-import React, { useMemo } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { HomePage } from './pages/Home';
-import { State, usePersistentState, useStatefull } from './utils/state';
-import { User, buildUser } from './user/User';
-import { UserContext, useUser } from './hooks/context';
-import { MainLayout } from './components/MainLayout';
-import { Credentials, CredentialsT } from './utils/serialization';
-import { useQueryClient } from "react-query"
-import { stringCodecOf } from './utils/codec';
-import { OptionalOf } from './utils/model';
-import { LoginWindowStates } from './components/LoginWindow';
-import { HistoryRecordPage } from './pages/HistoryRecordsPage';
-import { SetBalancePage } from './pages/SetBalancePage';
+import React, { useMemo } from 'react'
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
+import { HomePage } from './pages/Home'
+import { State, usePersistentState, useStatefull } from './utils/state'
+import { User, buildUser } from './user/User'
+import { UserContext, useUser } from './hooks/context'
+import { MainLayout } from './components/MainLayout'
+import { Credentials, OptionalCredentialsCodec } from './utils/serialization'
+import { LoginWindowStates } from './components/LoginWindow'
+import { HistoryRecordPage } from './pages/HistoryRecordsPage'
 
 const useUserCredentials = (credentials: State<Credentials | undefined>): User => {
 
-  const queryClient = useQueryClient()
-
   const user = useMemo(
-    () => buildUser(credentials, queryClient), 
-    [credentials, queryClient]
+    () => buildUser(credentials), 
+    [credentials]
   )
 
   return user
 }
 
-const CalculatorApp = () => {
+const UserProvider = (
+  props: {
+    children: React.ReactNode
+  }
+) => {
 
   const credentials = usePersistentState<Credentials | undefined>(
     "credentials", 
-    stringCodecOf(OptionalOf(CredentialsT)), 
+    OptionalCredentialsCodec, 
     undefined
   )
 
   const user = useUserCredentials(credentials)
 
-  return (
+  return(
       <UserContext.Provider value={user}>
-          <AppRouter/>
+          {props.children}
       </UserContext.Provider>
   )
 }
+
+const CalculatorApp = () => 
+  <UserProvider>
+    <AppRouter/>
+  </UserProvider>
+  
 
 const AppRouter = () => {
   
   const loginscreen = useStatefull<LoginWindowStates>(() => "hidden")
   const user = useUser()
+  const reloadBalance = useStatefull(() => true)
 
   return (
     <Router basename="/calculator-app">
-      <MainLayout loginScreen={loginscreen}>
+      <MainLayout loginScreen={loginscreen} reloadBalance={reloadBalance.value}>
         <Routes>
           {
             user.type === "visitor" ?
             <>
-              <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
+              <Route path="/" element={<HomePage loginScreen={loginscreen} reloadBalance={reloadBalance}/>} />
               <Route path="/new-operation" element={<Navigate to="/" />} />
               <Route path="/records-history" element={<Navigate to="/" />} />
-              <Route path="/set-balance" element={<Navigate to="/" />} />
             </> :
             <>
-              <Route path="/" element={<HomePage loginScreen={loginscreen}/>} />
-              <Route path="/new-operation" element={<HomePage loginScreen={loginscreen}/>} />
+              <Route path="/" element={<HomePage loginScreen={loginscreen} reloadBalance={reloadBalance}/>} />
+              <Route path="/new-operation" element={<HomePage loginScreen={loginscreen} reloadBalance={reloadBalance}/>} />
               <Route path="/records-history" element={<HistoryRecordPage/>} />
-              <Route path="/set-balance" element={<SetBalancePage/>} />
             </>
           }
         </Routes>

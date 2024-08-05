@@ -1,29 +1,23 @@
-import { useEffect } from "react"
+import React, { useEffect } from "react"
 import { Stack, Button, FormControl, InputLabel, Select, MenuItem, SelectChangeEvent, Card, CardHeader, CardContent, Box, Divider } from "@mui/material"
-import { Text } from "../primitives/Text"
+import { Text } from "../components/primitives/Text"
 import { useStatefull, setTo, State } from "../utils/state"
 import { LoginWindowStates } from "../components/LoginWindow"
 import { useLoggedUser, useUser } from "../hooks/context"
 import { OperationType } from "../utils/serialization"
 import { nop, sequenceIO } from "../utils/functional"
 import { useAsynchronous } from "../utils/asynchronism"
-import NumberEditor from "../primitives/NumberEditor"
-import { Row } from "../primitives/Stack"
+import NumberEditor from "../components/primitives/NumberEditor"
+import { Row } from "../components/primitives/Stack"
 
-const OperatorEditor = (
+const OperatorTypeEditor = (
     props: {
       operationState: State<OperationType | undefined>
+      handleChange: (event: SelectChangeEvent<string>) => void
     }
 ) => {
   
-    const handleChange = (event: SelectChangeEvent<string>) => {
-      const value = event.target.value
-      if (value === "") {
-        setTo(props.operationState, undefined)()
-      } else {
-        setTo(props.operationState, value as OperationType)()
-      }
-    }
+    
   
     return(
       <FormControl sx={{ width: "400px" }}>
@@ -31,7 +25,7 @@ const OperatorEditor = (
         <Select
           value={props.operationState.value ?? ""}
           label="Operation"
-          onChange={handleChange}
+          onChange={props.handleChange}
         >
           <MenuItem value="">
             <em>Select Operation</em>
@@ -47,10 +41,63 @@ const OperatorEditor = (
     )
 }
 
+const OperationEditor = (
+    props: {
+        operationType: State<OperationType | undefined>
+        operator1: State<number | undefined>
+        operator2: State<number | undefined>
+    }
+) => {
+
+    const operationType = props.operationType 
+    const operator1 = props.operator1 
+    const operator2 = props.operator2
+
+    const handleChange = (event: SelectChangeEvent<string>) => {
+        const value = event.target.value
+        if (value === "") {
+            setTo(operationType, undefined)()
+        } else {
+            const newValue =  value as OperationType
+            if (newValue === "square_root") {
+                setTo(operator2, undefined)()
+            }
+
+            if (newValue === "random_string") {
+                setTo(operator1, undefined)()
+                setTo(operator2, undefined)()
+            }
+
+            setTo(operationType, newValue)()
+        }
+      }
+
+    return(
+        <>
+            <OperatorTypeEditor operationState={operationType} handleChange={handleChange}/>
+
+            <NumberEditor 
+                sx={{ width: "400px" }} 
+                label="Operator 1" 
+                state={operator1}
+                disable={operationType.value === "random_string"}
+            />
+
+            <NumberEditor 
+                sx={{ width: "400px" }} 
+                label="Operator 2" 
+                state={operator2}
+                disable={operationType.value === "square_root" || operationType.value === "random_string"}
+            />
+        </>
+    )
+}
+
 
 export const HomePage = (
     props: {
         loginScreen: State<LoginWindowStates>
+        reloadBalance: State<boolean>
     }
 ) => {
     const user = useUser()
@@ -68,7 +115,9 @@ export const HomePage = (
                 <Text text={"New Operation"} fontSize={40} margin={4} sx={{textDecoration: "underline"}} color={"#333333"}/>
                 
                 {
-                    user.type === "visitor" ? <VisitorHome loginScreen={props.loginScreen}/> : <LoggedHome/>
+                    user.type === "visitor" ? 
+                        <VisitorHome loginScreen={props.loginScreen}/> : 
+                        <LoggedHome reloadBalance={props.reloadBalance}/>
                 }
             </Stack>
         </Stack>
@@ -84,14 +133,15 @@ const VisitorHome = (
     const operationType = useStatefull<OperationType | undefined>(() => undefined)
     const operator1 = useStatefull<number | undefined>(() => undefined)
     const operator2 = useStatefull<number | undefined>(() => undefined)
+    
 
     return(
         <>
-            <OperatorEditor operationState={operationType}/>
-
-            <NumberEditor sx={{ width: "400px" }} label="Operator 1" state={operator1}/>
-
-            <NumberEditor sx={{ width: "400px" }} label="Operator 2" state={operator2}/>
+            <OperationEditor
+                operationType={operationType}
+                operator1={operator1}
+                operator2={operator2}
+            />
 
             <Row spacing={3}>
                 <Button 
@@ -106,7 +156,11 @@ const VisitorHome = (
     )
 }
 
-const LoggedHome = () => {
+const LoggedHome = (
+    props: {
+        reloadBalance: State<boolean>
+    }
+) => {
 
     const user = useLoggedUser()
     const operationType = useStatefull<OperationType | undefined>(() => undefined)
@@ -139,18 +193,24 @@ const LoggedHome = () => {
 
     useEffect(
         makeOperationAsync.result !== undefined && makeOperationAsync.status === "completed" ?
-            sequenceIO([setTo(result, makeOperationAsync.result?.result ?? ""), setTo(cost, `${makeOperationAsync.result?.cost}`)]) :
+            sequenceIO([
+                setTo(result, makeOperationAsync.result?.result ?? ""), 
+                setTo(cost, `${makeOperationAsync.result?.cost}`),
+                props.reloadBalance.apply(it => !it)
+            ]) :
             nop,
-        [makeOperationAsync]
+        [makeOperationAsync.status, makeOperationAsync.result]
     )
-    
+    console.log(makeOperationAsync.error)
+
     return(
         <>
-            <OperatorEditor operationState={operationType}/>
 
-            <NumberEditor sx={{ width: "400px" }} label="Operator 1" state={operator1}/>
-
-            <NumberEditor sx={{ width: "400px" }} label="Operator 2" state={operator2}/>
+            <OperationEditor
+                operationType={operationType}
+                operator1={operator1}
+                operator2={operator2}
+            />
 
             <Row spacing={3}>
                 <Button 
@@ -189,6 +249,7 @@ const LoggedHome = () => {
                 />
             </Row>
             { showError.value && <Text text={"Syntax Error!"} fontSize={24} color={"#f44336"}/> }
+            { makeOperationAsync.error?.message === "Status code 402" && <Text text={"Insuficient Balance"} fontSize={24} color={"#f44336"}/> }
             {
                 showResult.value &&  result.value.length > 0 && cost.value.length > 0 && <ResultCard result={result} cost={cost}/>
             }

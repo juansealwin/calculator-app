@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from "react"
 import { IO } from "./functional"
 import { List } from "./list"
@@ -10,9 +9,6 @@ export const pureAsync = <T>(value: T): Async<T> => async () => value
 export const asyncNoOp: Async<void> = pureAsync(undefined)
 
 export const asyncError: Async<never> = async () => throwError({name:"Async error", message:"not implemented"})
-
-export const bindAsync = <I, O>(value: Async<I>, f: (input: I) => Async<O>): Async<O> =>
-  async () => await f(await value())()
 
 export type Async<T> = () => Promise<T>
 

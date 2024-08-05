@@ -1,7 +1,7 @@
 import React, { useEffect } from "react"
 import { Stack, Button, SxProps } from "@mui/material"
 import DeleteIcon from "@mui/icons-material/KeyboardArrowLeft"
-import { Text } from "../primitives/Text"
+import { Text } from "../components/primitives/Text"
 import { useStatefull, setTo, State } from "../utils/state"
 import { LoginWindowStates } from "../components/LoginWindow"
 import { useLoggedUser, useUser } from "../hooks/context"

@@ -1,9 +1,9 @@
 import React from "react"
+import { setTo, State } from "../../utils/state"
 import { IconButton, TextField, TextFieldProps } from "@mui/material"
-import { List } from "../utils/list"
-import { IO } from "../utils/functional"
-import { State, setTo } from "../utils/state"
 import { Visibility, VisibilityOff } from "@mui/icons-material"
+import { List } from "../../utils/list"
+import { IO } from "../../utils/functional"
 
 export const StringEditor = (
   props: {
@@ -22,8 +22,6 @@ export const StringEditor = (
     onKeyPressed?: (key: string) => IO<void>
     className?: string
     rows?: number
-    disable?: boolean
-    readOnly?: boolean
   }
 ) =>  {
   const error = ((props.valid === false) || props.showErrors) ?? false
@@ -43,8 +41,6 @@ export const StringEditor = (
       }
       className={props.className}
       rows={props.rows}
-      disable={props.disable}
-      readOnly={props.readOnly}
       showpassword ={props.showpassword }
       prefixx={props.prefix}
       suffix={props.suffix}
@@ -59,7 +55,6 @@ export const Input = (
     state?: State<string>
     rows?: number
     disable?: boolean
-    readOnly?: boolean
     showpassword ?: State<boolean>
     prefixx?: React.ReactNode
     suffix?: React.ReactNode
@@ -70,9 +65,7 @@ export const Input = (
     rows={props.rows}
     value={props.state !== undefined ? props.state?.value : props.value}
     onChange={event => props.state !== undefined ? setTo(props.state, event.target.value)() : undefined}
-    disabled={props.disable}
     InputProps={{
-      readOnly: props.readOnly,
       startAdornment: props.prefixx,
       endAdornment: props.type === "password" && props.showpassword  !== undefined?
         <IconButton

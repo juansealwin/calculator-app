@@ -208,19 +208,20 @@ export const RegisterForm = (
 
     const hasNumber = /\d/
     const hasLetter = /[a-zA-Z]/
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     const validRegistry = 
-        data.value.username.length > 5 && 
-        emailRegex.test(data.value.username) &&
-        data.value.password.length > 5 &&
-        hasNumber.test(data.value.password) &&
-        hasLetter.test(data.value.password) &&
-        data.value.password === repeatPassword.value    
+      data.value.username.length > 5 && 
+      emailRegex.test(data.value.username) &&
+      data.value.password.length > 6 &&
+      hasNumber.test(data.value.password) &&
+      hasLetter.test(data.value.password) &&
+      hasSpecialChar.test(data.value.password) &&
+      data.value.password === repeatPassword.value
   
   
     return (
-     
         <Col
           width={"80%"}
           padding={4}
